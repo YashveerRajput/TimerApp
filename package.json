@@ -4,8 +4,8 @@
   "description": "Full-stack Focus Timer with Apple-style UI",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon app.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
   "keywords": ["timer", "stopwatch", "focus"],
   "author": "",

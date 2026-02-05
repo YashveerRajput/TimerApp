@@ -9,9 +9,8 @@ const connectDB = require('./config/db');
 const routes = require('./routes/index');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-// Connect to MongoDB
+// Connect to MongoDB once on cold start
 connectDB();
 
 // Middleware
@@ -39,16 +38,7 @@ app.use((req, res) => {
   res.status(404).send('Page not found');
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log('🚀 Focus Timer Server Started');
-  console.log(`📍 Server: http://localhost:${PORT}`);
-  console.log(`⏱️  Timer: http://localhost:${PORT}/`);
-  console.log(`📜 History: http://localhost:${PORT}/history`);
-  console.log('');
-  console.log('⌨️  Keyboard Shortcuts:');
-  console.log('   Space - Start/Pause');
-  console.log('   R - Reset');
-  console.log('   L - Lap (Stopwatch mode)');
-  console.log('   F - Toggle Fullscreen');
-});
+// Export the configured Express app.
+// Local development will start the server via server.js,
+// and Vercel will mount this app in a serverless function.
+module.exports = app;
