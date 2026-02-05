@@ -27,6 +27,8 @@ const startBtn = document.getElementById('start-btn');
 const pauseBtn = document.getElementById('pause-btn');
 const resetBtn = document.getElementById('reset-btn');
 const lapBtn = document.getElementById('lap-btn');
+const plusBtn = document.getElementById('plus-btn');
+const minusBtn = document.getElementById('minus-btn');
 const timerModeBtn = document.getElementById('timer-mode-btn');
 const stopwatchModeBtn = document.getElementById('stopwatch-mode-btn');
 const timerSettings = document.getElementById('timer-settings');
@@ -55,6 +57,8 @@ function init() {
   pauseBtn.addEventListener('click', pauseTimer);
   resetBtn.addEventListener('click', resetTimer);
   lapBtn.addEventListener('click', recordLap);
+  plusBtn.addEventListener('click', addMinute);
+  minusBtn.addEventListener('click', subtractMinute);
   timerModeBtn.addEventListener('click', () => switchMode('timer'));
   stopwatchModeBtn.addEventListener('click', () => switchMode('stopwatch'));
   setTimerBtn.addEventListener('click', setTimerFromInputs);
@@ -133,6 +137,12 @@ function startTimer() {
   startBtn.classList.add('hidden');
   pauseBtn.classList.remove('hidden');
   
+  // Show plus/minus buttons in timer mode
+  if (timerState.mode === 'timer') {
+    plusBtn.classList.remove('hidden');
+    minusBtn.classList.remove('hidden');
+  }
+  
   // Start interval
   if (timerState.mode === 'timer') {
     timerState.intervalId = setInterval(updateTimerCountdown, 100);
@@ -154,6 +164,12 @@ function pauseTimer() {
   pauseBtn.classList.add('hidden');
   startBtn.classList.remove('hidden');
   
+  // Keep plus/minus buttons visible when paused in timer mode
+  if (timerState.mode === 'timer') {
+    plusBtn.classList.remove('hidden');
+    minusBtn.classList.remove('hidden');
+  }
+  
   // Stop auto-hide and show controls
   clearTimeout(autoHideState.timeoutId);
   showControls();
@@ -170,6 +186,8 @@ function resetTimer() {
   // Update button visibility
   pauseBtn.classList.add('hidden');
   startBtn.classList.remove('hidden');
+  plusBtn.classList.add('hidden');
+  minusBtn.classList.add('hidden');
   
   // Stop auto-hide and show controls
   clearTimeout(autoHideState.timeoutId);
@@ -206,6 +224,8 @@ function updateTimerCountdown() {
     // Reset buttons
     pauseBtn.classList.add('hidden');
     startBtn.classList.remove('hidden');
+    plusBtn.classList.add('hidden');
+    minusBtn.classList.add('hidden');
     
     return;
   }
@@ -254,6 +274,49 @@ function recordLap() {
     </div>
   `;
   lapsList.insertBefore(lapItem, lapsList.firstChild);
+}
+
+// Add one minute to running timer
+function addMinute() {
+  if (timerState.mode !== 'timer') return;
+  
+  // Add 60 seconds to total time
+  timerState.totalSeconds += 60;
+  
+  // If timer is running, adjust start time to account for added minute
+  if (timerState.isRunning) {
+    timerState.startTime -= 60000; // 60 seconds in milliseconds
+  } else {
+    // If paused, just update the display
+    updateDisplay();
+  }
+}
+
+// Subtract one minute from running timer
+function subtractMinute() {
+  if (timerState.mode !== 'timer') return;
+  
+  // Calculate current remaining time
+  let remainingSeconds;
+  if (timerState.isRunning) {
+    const elapsedSeconds = Math.floor((Date.now() - timerState.startTime) / 1000);
+    remainingSeconds = timerState.totalSeconds - elapsedSeconds;
+  } else {
+    // If paused, use the total seconds
+    remainingSeconds = timerState.totalSeconds - Math.floor(timerState.elapsedTime / 1000);
+  }
+  
+  // Only subtract if there's more than 1 minute remaining
+  if (remainingSeconds > 60) {
+    timerState.totalSeconds -= 60;
+    
+    if (timerState.isRunning) {
+      timerState.startTime += 60000; // 60 seconds in milliseconds
+    } else {
+      // If paused, just update the display
+      updateDisplay();
+    }
+  }
 }
 
 // Update font size
