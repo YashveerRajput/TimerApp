@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Focus Timer</title>
+  
+  <!-- Google Fonts - Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <style>
+    * {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    
+    body {
+      background: #000;
+      color: #fff;
+    }
+    
+    /* Apple-style glassmorphism */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Smooth transitions */
+    .smooth-transition {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    /* Timer display font size (dynamic) */
+    #timer-display {
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      cursor: default;
+    }
+    
+    #milliseconds-display {
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      cursor: default;
+    }
+    
+    /* Button hover effects */
+    .btn-hover:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(255, 255, 255, 0.1);
+    }
+    
+    .btn-hover:active {
+      transform: translateY(0);
+    }
+    
+    /* Flash animation for timer end */
+    @keyframes flash {
+      0%, 100% { background: #000; }
+      50% { background: rgba(239, 68, 68, 0.3); }
+    }
+    
+    .flash-bg {
+      animation: flash 0.5s ease-in-out 3;
+    }
+    
+    /* Laps list styling */
+    .lap-item {
+      background: rgba(255, 255, 255, 0.03);
+      border-left: 2px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    /* Fade transition for auto-hide */
+    .auto-hide-element {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), 
+                  transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      will-change: opacity, transform;
+    }
+    
+    .auto-hide-element.hidden {
+      opacity: 0;
+      transform: translateY(-10px) scale(0.98);
+      pointer-events: none;
+    }
+    
+    /* Hide cursor */
+    body.hide-cursor {
+      cursor: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+  
+  <!-- Mode Tabs - Top Left -->
+  <div id="mode-tabs" class="absolute top-6 left-6 auto-hide-element">
+    <div class="glass-card rounded-3xl p-2 flex gap-2">
+      <button id="timer-mode-btn" class="mode-tab px-8 py-3 rounded-2xl smooth-transition bg-white/10 text-white">
+        Timer
+      </button>
+      <button id="stopwatch-mode-btn" class="mode-tab px-8 py-3 rounded-2xl smooth-transition">
+        Stopwatch
+      </button>
+    </div>
+  </div>
+
+  <!-- Navigation - Top Right -->
+  <div id="top-nav" class="absolute top-6 right-6 auto-hide-element">
+    <a href="/history" class="glass-card px-6 py-2.5 rounded-2xl text-sm smooth-transition btn-hover">
+      History
+    </a>
+  </div>
+
+  <!-- Main Timer Container -->
+  <div class="w-full max-w-4xl mx-auto flex flex-col items-center justify-center">
+    
+    <!-- Timer Display -->
+    <div id="timer-display" class="text-9xl font-light mb-12 smooth-transition" style="font-size: 144px;">
+      00:00:00
+    </div>
+    
+    <!-- Milliseconds (Stopwatch only) -->
+    <div id="milliseconds-display" class="hidden text-4xl font-light text-white/60 -mt-8 mb-8">
+      .000
+    </div>
+
+    <!-- Timer Settings (Timer Mode Only) -->
+    <div id="timer-settings" class="glass-card rounded-3xl p-8 mb-8 w-full max-w-md">
+      <h3 class="text-lg font-medium mb-4 text-center">Set Timer</h3>
+      <div class="flex gap-4 items-center justify-center">
+        <div class="flex flex-col items-center">
+          <label class="text-sm text-white/60 mb-2">Minutes</label>
+          <input id="minutes-input" type="number" min="0" max="99" value="25" 
+                 class="w-20 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center text-xl focus:outline-none focus:border-white/30 smooth-transition">
+        </div>
+        <span class="text-3xl text-white/40 mt-6">:</span>
+        <div class="flex flex-col items-center">
+          <label class="text-sm text-white/60 mb-2">Seconds</label>
+          <input id="seconds-input" type="number" min="0" max="59" value="0" 
+                 class="w-20 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center text-xl focus:outline-none focus:border-white/30 smooth-transition">
+        </div>
+      </div>
+      <button id="set-timer-btn" class="w-full mt-6 bg-white/10 hover:bg-white/15 rounded-2xl py-3 smooth-transition">
+        Set Timer
+      </button>
+    </div>
+
+    <!-- Laps (Stopwatch Mode Only) -->
+    <div id="laps-container" class="hidden glass-card rounded-3xl p-6 mb-8 w-full max-w-md max-h-64 overflow-y-auto">
+      <h3 class="text-lg font-medium mb-4">Laps</h3>
+      <div id="laps-list" class="space-y-2">
+        <!-- Laps will be inserted here -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Control Buttons - Bottom Center -->
+  <div id="control-buttons" class="fixed bottom-8 left-1/2 transform -translate-x-1/2 flex gap-4 auto-hide-element">
+    <button id="start-btn" class="glass-card px-12 py-4 rounded-2xl text-lg font-medium smooth-transition btn-hover shadow-lg">
+      Start
+    </button>
+    <button id="pause-btn" class="hidden glass-card px-12 py-4 rounded-2xl text-lg font-medium smooth-transition btn-hover shadow-lg">
+      Pause
+    </button>
+    <button id="reset-btn" class="glass-card px-12 py-4 rounded-2xl text-lg font-medium smooth-transition btn-hover shadow-lg">
+      Reset
+    </button>
+    <button id="lap-btn" class="hidden glass-card px-12 py-4 rounded-2xl text-lg font-medium smooth-transition btn-hover shadow-lg">
+      Lap
+    </button>
+  </div>
+
+  <!-- Bottom Right Controls -->
+  <div id="bottom-controls" class="fixed bottom-8 right-8 flex items-center gap-4 auto-hide-element">
+      
+      <!-- Font Size Slider -->
+      <div class="glass-card rounded-3xl px-6 py-4 flex items-center gap-4">
+        <span class="text-sm text-white/60">Size</span>
+        <input id="font-slider" type="range" min="72" max="288" value="144" 
+               class="w-32 accent-white">
+      </div>
+
+      <!-- Fullscreen Toggle -->
+      <button id="fullscreen-btn" class="glass-card px-6 py-4 rounded-2xl smooth-transition btn-hover">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+        </svg>
+      </button>
+
+      <!-- Save Session Button -->
+      <button id="save-session-btn" class="glass-card px-6 py-4 rounded-2xl smooth-transition btn-hover">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+        </svg>
+      </button>
+  </div>
+
+  <!-- Alert Sound (hidden audio element) -->
+  <audio id="alert-sound" src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjGH0fPTgjMGHm7A7+OZURE" preload="auto"></audio>
+
+  <!-- Client-side JavaScript -->
+  <script src="/js/timer.js"></script>
+
+</body>
+</html>
