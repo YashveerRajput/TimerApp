@@ -1,6 +1,7 @@
 # Focus Timer
 
 A full-stack web application for time management with Apple-inspired minimal design.
+Live Demo - https://timerapp-three.vercel.app/
 
 ## Features
 
